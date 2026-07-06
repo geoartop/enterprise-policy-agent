@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Ignore uploaded files and generated reports
+backend/data/raw/*
+!backend/data/raw/.gitkeep
+backend/data/reports/*
+!backend/data/reports/.gitkeep
