@@ -1,0 +1,1 @@
+Given the conversation above, who should act next? Select one of: {options}
