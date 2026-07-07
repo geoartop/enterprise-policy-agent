@@ -4,8 +4,13 @@ langgraph
 langchain
 langchain-core
 langchain-postgres
-psycopg2-binary
+psycopg-binary
 pgvector
 pandas
 pymupdf
 python-dotenv
+langchain-google-genai
+google-generativeai
+loguru
+langchain-community
+langchain-text-splitters

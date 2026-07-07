@@ -1,6 +1,7 @@
 import os
 import psycopg
 from dotenv import load_dotenv
+from loguru import logger
 
 load_dotenv()
 
@@ -15,7 +16,7 @@ def get_db_connection_string() -> str:
     port = os.getenv("POSTGRES_PORT", "5432")
     db_name = os.getenv("POSTGRES_DB", "policy_agent")
     
-    return f"postgresql://{user}:{password}@{host}:{port}/{db_name}"
+    return f"postgresql+psycopg://{user}:{password}@{host}:{port}/{db_name}"
 
 def setup_database():
     """
@@ -31,16 +32,15 @@ def setup_database():
             with conn.cursor() as cur:
                 # Enable the pgvector extension
                 cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-                print("Successfully enabled pgvector extension.")
+                logger.info("Successfully enabled pgvector extension.")
     except Exception as e:
-        print(f"Error setting up database: {e}")
+        logger.error(f"Error setting up database: {e}")
         raise
 
-
 if __name__ == "__main__":
-    print("Testing database connection...")
+    logger.info("Testing database connection...")
     try:
         setup_database()
-        print("\nSuccess!")
+        logger.success("Success! The application connected to the database and pgvector is ready.")
     except Exception as e:
-        print(f"\n Connection failed: {e}")
+        logger.error(f"Connection failed: {e}")
