@@ -45,17 +45,29 @@ def ingest_file(file_path: str, vector_store: PGVector, force: bool = False):
     filename = os.path.basename(file_path)
     logger.info(f"Processing {filename}...")
 
-    # If force=True, skip the check and ingest anyway.
-    if not force:
-        # We do a dummy search just to check if the metadata source exists
-        existing = vector_store.similarity_search(
-            "dummy query", k=1, filter={"source": filename}
-        )
-        if existing:
+    # We check if the file exists to determine if we need to skip or delete
+    existing = vector_store.similarity_search(
+        "dummy query", k=1, filter={"source": filename}
+    )
+    
+    if existing:
+        if not force:
             logger.warning(
                 f"File {filename} appears to already exist in the database. Skipping. (Use --force to override)"
             )
-            return
+            return False
+        else:
+            logger.info(f"File {filename} exists and force=True. Deleting old records to prevent duplicates...")
+            try:
+                vector_store.delete(filter={"source": {"$eq": filename}})
+                logger.success(f"Successfully deleted old records for {filename}.")
+            except Exception as e:
+                logger.warning(f"Standard filter deletion failed ({e}). Attempting fallback simple filter...")
+                try:
+                    vector_store.delete(filter={"source": filename})
+                    logger.success(f"Successfully deleted old records for {filename}.")
+                except Exception as e2:
+                    logger.error(f"Could not automatically delete old records. Duplicates may be appended! Error: {e2}")
 
     try:
         documents = parse_pdf_to_chunks(file_path)
@@ -65,8 +77,10 @@ def ingest_file(file_path: str, vector_store: PGVector, force: bool = False):
 
         vector_store.add_documents(documents)
         logger.success(f"Successfully ingested {filename}")
+        return True
     except Exception as e:
         logger.error(f"Error processing {filename}: {e}")
+        return False
 
 
 # for testing purposes
@@ -75,7 +89,7 @@ def main():
     parser.add_argument(
         "path",
         nargs="?",
-        default="backend/data/raw",
+        default="data/raw",
         help="Path to a specific PDF file or a directory of PDFs.",
     )
     parser.add_argument(

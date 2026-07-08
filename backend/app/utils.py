@@ -1,16 +1,16 @@
 import os
+from pathlib import Path
 from loguru import logger
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 def load_prompt(filename: str) -> str:
-    """Loads a prompt from the adjacent prompts directory."""
-    prompt_path = os.path.join(os.path.dirname(__file__), "prompts", filename)
+    """Loads a prompt from the agents/prompts directory."""
+    prompt_path = Path(__file__).parent / "agents" / "prompts" / filename
     try:
-        with open(prompt_path, "r", encoding="utf-8") as file:
-            content = file.read().strip()
-            logger.debug(f"Successfully loaded prompt: {filename}")
-            return content
+        content = prompt_path.read_text(encoding="utf-8").strip()
+        logger.debug(f"Successfully loaded prompt: {filename}")
+        return content
     except FileNotFoundError as e:
         logger.error(f"Prompt file not found: {prompt_path}")
         raise

@@ -14,7 +14,8 @@ def parse_pdf_to_chunks(file_path: str, chunk_size: int = 1000, chunk_overlap: i
     filename = os.path.basename(file_path)
     
     policy_year = None
-    match = re.search(r'\b(19\d{2}|20\d{2})\b', filename)
+    # Use lookarounds instead of \b because underscores are considered word characters
+    match = re.search(r'(?<!\d)(19\d{2}|20\d{2})(?!\d)', filename)
     if match:
         policy_year = match.group(0)
     

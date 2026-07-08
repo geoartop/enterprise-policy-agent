@@ -218,7 +218,13 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Ignore uploaded files and generated reports
-backend/data/raw/*
-!backend/data/raw/.gitkeep
-backend/data/reports/*
-!backend/data/reports/.gitkeep
+data/raw/*
+!data/raw/.gitkeep
+data/reports/*
+!data/reports/.gitkeep
+
+# Ad-hoc test and utility scripts
+backend/app/clear_db.py
+backend/app/check_db.py
+backend/app/test_graph.py
+backend/app/interactive_chat.py
