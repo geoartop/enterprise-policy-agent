@@ -13,7 +13,7 @@ options = ["FINISH"] + members
 
 class RouteResponse(BaseModel):
     next_agent: Literal["FINISH", "policy_expert", "ingestion_worker"] = Field(
-        description="The next agent to route the conversation to, or FINISH."
+        description="The next agent. MUST be 'policy_expert' if the user's latest message is a greeting (e.g., 'hi') or a new question. ONLY use 'FINISH' if an AI worker has already replied to the user's latest message."
     )
 
 llm = get_llm()

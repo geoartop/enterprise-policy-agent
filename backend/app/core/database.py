@@ -18,6 +18,12 @@ def get_db_connection_string() -> str:
     
     return f"postgresql+psycopg://{user}:{password}@{host}:{port}/{db_name}"
 
+def get_raw_connection_string() -> str:
+    """
+    Returns the standard postgresql connection string without the psycopg adapter hint.
+    Used by libraries like psycopg_pool and langgraph-checkpoint-postgres.
+    """
+    return get_db_connection_string().replace("postgresql+psycopg://", "postgresql://")
 def setup_database():
     """
     Initializes the database by enabling the pgvector extension.

@@ -1,6 +1,9 @@
 import operator
 from loguru import logger
 from langgraph.graph import StateGraph, START, END
+import psycopg
+from langgraph.checkpoint.postgres import PostgresSaver
+from backend.app.core.database import get_raw_connection_string
 
 from backend.app.agents.state import AgentState
 from backend.app.agents.supervisor import supervisor_node
@@ -35,6 +38,14 @@ workflow.add_conditional_edges(
 workflow.add_edge("policy_expert", "supervisor")
 workflow.add_edge("ingestion_worker", "supervisor")
 
-# Compile the final application
-app = workflow.compile()
-logger.success("Main Agent Graph compiled successfully!")
+# Create a permanent connection for the checkpointer
+conn_str = get_raw_connection_string()
+conn = psycopg.connect(conn_str, autocommit=True)
+
+# Initialize the PostgresSaver checkpointer
+memory = PostgresSaver(conn)
+memory.setup()  # Ensures the checkpoint tables exist
+
+# Compile the final application with persistent memory
+app = workflow.compile(checkpointer=memory)
+logger.success("Main Agent Graph compiled successfully with PostgresSaver!")

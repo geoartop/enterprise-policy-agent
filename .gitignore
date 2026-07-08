@@ -228,3 +228,5 @@ backend/app/clear_db.py
 backend/app/check_db.py
 backend/app/test_graph.py
 backend/app/interactive_chat.py
+backend/logs/
+backend/test_api.py

@@ -16,9 +16,14 @@ from backend.app.core.database import get_db_connection_string
 from backend.app.services.document_parser import parse_pdf_to_chunks
 
 
+from functools import lru_cache
+
+@lru_cache(maxsize=1)
 def get_vector_store() -> PGVector:
     """
     Initializes and returns the PGVector store using Gemini Embeddings.
+    Uses lru_cache to ensure only one instance is created per process, 
+    preventing SQLAlchemy MetaData collisions during parallel tool calling.
     """
     # Uses GOOGLE_API_KEY and EMBEDDING_MODEL from environment
     model_name = os.getenv("EMBEDDING_MODEL")

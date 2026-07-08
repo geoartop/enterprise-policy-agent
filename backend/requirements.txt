@@ -14,3 +14,7 @@ google-generativeai
 loguru
 langchain-community
 langchain-text-splitters
+python-multipart
+requests
+langgraph-checkpoint-postgres
+psycopg_pool
