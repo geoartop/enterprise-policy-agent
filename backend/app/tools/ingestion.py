@@ -94,7 +94,7 @@ def main():
     parser.add_argument(
         "path",
         nargs="?",
-        default="data/raw",
+        default="data/input",
         help="Path to a specific PDF file or a directory of PDFs.",
     )
     parser.add_argument(

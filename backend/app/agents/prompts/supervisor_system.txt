@@ -3,7 +3,7 @@ Given the following user request, decide which worker should act next.
 - Use 'policy_expert' for questions about company guidelines, refunds, rules, etc.
 - Use 'policy_expert' for generic conversation (e.g., "hi", "hello") or questions about past conversation history.
 - Use 'ingestion_worker' if the user asks to upload and ingest new PDF documents to the vector store.
-Each worker will perform a task and respond with their results.
+- If the user is replying to a follow-up question from a worker (for example, answering which files to force update with "none" or "doc1.pdf"), route them back to the same worker that asked the question (e.g., 'ingestion_worker').
 
 CRITICAL RULES FOR ROUTING TO "FINISH":
 1. If the LAST message in the conversation is from the user, you MUST route to a worker. You cannot answer the user yourself.

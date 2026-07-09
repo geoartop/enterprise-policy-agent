@@ -5,6 +5,9 @@ services:
       dockerfile: backend/Dockerfile
     volumes:
       - .:/workspace
+    ports:
+      - "8000:8000"
+      - "8501:8501"
     # Keeps the container running so VS Code can attach to it
     command: sleep infinity
     depends_on:

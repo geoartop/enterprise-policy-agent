@@ -1,44 +1,90 @@
 import os
+import glob
 from langchain_core.tools import tool
 from loguru import logger
 from backend.app.tools.ingestion import get_vector_store, ingest_file
 
 @tool
-def ingest_policy_document(file_path: str, force: bool = False) -> str:
+def ingest_policy_document(force_files: list[str] = None, clear_remaining: bool = False) -> str:
     """
-    Ingests a PDF policy document into the vector database.
+    Ingests PDF policy documents into the vector database from the data/input directory.
     
     Args:
-        file_path: The absolute or relative path to the PDF document to ingest.
-        force: If True, forces ingestion even if the document seems to exist in the database.
+        force_files: A list of specific filenames (e.g., ['doc1.pdf']) to force ingest.
+                     If None or empty, the tool will attempt to ingest all new files.
+        clear_remaining: If True, deletes all remaining PDF files in the directory after ingestion.
         
     Returns:
-        A string indicating success or the specific error encountered.
+        A string indicating the result of the operation, including any skipped files.
     """
-    logger.info(f"Tool 'ingest_policy_document' invoked for file: {file_path}, force={force}")
+    logger.info(f"Tool 'ingest_policy_document' invoked. force_files={force_files}, clear_remaining={clear_remaining}")
     
-    # Resolve absolute path
-    target_path = os.path.abspath(file_path)
-    
-    if not os.path.exists(target_path):
-        error_msg = f"File not found: {target_path}. Please check the path and try again."
-        logger.error(error_msg)
-        return error_msg
-        
-    if not target_path.lower().endswith(".pdf"):
-        error_msg = f"The provided file is not a PDF: {target_path}. Only PDFs are supported."
-        logger.error(error_msg)
-        return error_msg
-        
     try:
         vector_store = get_vector_store()
-        # Execute the ingestion function from our existing logic
-        was_ingested = ingest_file(target_path, vector_store, force)
-        
-        if not was_ingested:
-            return "The document already exists in the database. Please ask the user if they would like to force an update."
-            
-        return f"Successfully ingested document {target_path} into the database."
     except Exception as e:
-        logger.error(f"Error during ingestion tool execution: {e}")
-        return f"Failed to ingest document: {str(e)}"
+        logger.error(f"Failed to connect to vector database: {e}")
+        return f"Failed to connect to vector database: {str(e)}"
+    
+    target_dir = os.path.abspath("data/input")
+    
+    if not os.path.exists(target_dir):
+        return f"Directory not found: {target_dir}."
+        
+    pdf_files = glob.glob(os.path.join(target_dir, "*.pdf"))
+    if not pdf_files:
+        return "No PDF files found to ingest."
+        
+    skipped_files = []
+    ingested_files = []
+    
+    # Decide which files to process
+    files_to_process = pdf_files
+    force_mode = False
+    
+    if force_files is not None:
+        force_mode = True
+        # Filter files to process based on force_files
+        files_to_process = [f for f in pdf_files if os.path.basename(f) in force_files]
+        
+    for pdf in files_to_process:
+        try:
+            # If we are explicitly forcing these files, set force=True
+            was_ingested = ingest_file(pdf, vector_store, force=force_mode)
+            if was_ingested:
+                ingested_files.append(os.path.basename(pdf))
+                # Delete the file upon successful ingestion
+                os.remove(pdf)
+                logger.info(f"Deleted successfully ingested file: {pdf}")
+            else:
+                skipped_files.append(os.path.basename(pdf))
+        except Exception as e:
+            logger.error(f"Failed to ingest {os.path.basename(pdf)}: {str(e)}")
+            
+    # Clear remaining files if requested
+    cleared_files = []
+    if clear_remaining:
+        remaining_pdfs = glob.glob(os.path.join(target_dir, "*.pdf"))
+        for pdf in remaining_pdfs:
+            try:
+                os.remove(pdf)
+                cleared_files.append(os.path.basename(pdf))
+                logger.info(f"Cleared remaining file: {pdf}")
+            except Exception as e:
+                logger.error(f"Failed to clear file {pdf}: {str(e)}")
+                
+    # Construct response
+    response_lines = []
+    if ingested_files:
+        response_lines.append(f"Successfully ingested and deleted: {', '.join(ingested_files)}.")
+    
+    if skipped_files and not force_mode:
+        response_lines.append(f"The following files already exist and were skipped: {', '.join(skipped_files)}.")
+        response_lines.append("Please ask the user which of these they would like to force update.")
+        
+    if cleared_files:
+        response_lines.append(f"Cleared the following remaining files from the folder: {', '.join(cleared_files)}.")
+        
+    if not response_lines:
+        return "No action was taken. The files requested for force ingestion were not found in the directory."
+        
+    return "\n".join(response_lines)

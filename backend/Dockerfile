@@ -11,5 +11,6 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /workspace
 
 # Install Python dependencies from requirements.txt
-COPY backend/requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+COPY backend/requirements.txt /tmp/backend_requirements.txt
+COPY frontend/requirements.txt /tmp/frontend_requirements.txt
+RUN pip install --no-cache-dir -r /tmp/backend_requirements.txt -r /tmp/frontend_requirements.txt

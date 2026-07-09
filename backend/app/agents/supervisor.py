@@ -18,13 +18,6 @@ class RouteResponse(BaseModel):
 
 llm = get_llm()
 
-system_prompt = load_prompt("supervisor_system.txt")
-human_prompt = load_prompt("supervisor_human.txt")
-
-prompt = create_agent_prompt(system_prompt, human_prompt, options, members)
-
-supervisor_chain = prompt | llm.with_structured_output(RouteResponse)
-
 def supervisor_node(state: AgentState) -> dict:
     """
     Executes the supervisor routing logic.
@@ -40,6 +33,12 @@ def supervisor_node(state: AgentState) -> dict:
     """
     logger.info("Supervisor node invoked. Evaluating conversation state.")
     try:
+        # Load dynamically to catch prompt changes without restart
+        sys_prompt = load_prompt("supervisor_system.txt")
+        hum_prompt = load_prompt("supervisor_human.txt")
+        prompt = create_agent_prompt(sys_prompt, hum_prompt, options, members)
+        supervisor_chain = prompt | llm.with_structured_output(RouteResponse)
+        
         result = supervisor_chain.invoke(state)
         logger.info(f"Supervisor routing decision: {result.next_agent}")
         return {"next_agent": result.next_agent}
