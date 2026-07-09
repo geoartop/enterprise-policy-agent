@@ -139,7 +139,15 @@ with st.sidebar:
 
 
 st.title("Policy Assistant")
-st.markdown("An advanced AI agent for comprehensive document analysis, policy compliance verification, and intelligent querying across your enterprise knowledge base.")
+st.markdown("""
+Welcome to the **Enterprise Policy Agent**! This application serves as your intelligent assistant for navigating corporate policies.
+
+Here is a quick overview of what you can do with this tool:
+
+**Key Capabilities:**
+- **Document Ingestion:** Upload PDF policy documents directly through the sidebar. The agent will process and index them into a secure vector database.
+- **Intelligent Querying:** Ask complex questions about your enterprise policies. The agent uses Retrieval-Augmented Generation (RAG) to find relevant sections and synthesize accurate answers.
+""")
 
 # Render existing chat history
 for msg in st.session_state.messages:
