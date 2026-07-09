@@ -4,6 +4,17 @@ from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 def parse_pdf_to_chunks(file_path: str, chunk_size: int = 1000, chunk_overlap: int = 200):
+    """
+    Parses a PDF document into text chunks suitable for vector storage.
+    
+    Args:
+        file_path (str): The absolute or relative path to the PDF file.
+        chunk_size (int, optional): The maximum size of each text chunk. Defaults to 1000.
+        chunk_overlap (int, optional): The overlap between consecutive chunks. Defaults to 200.
+        
+    Returns:
+        list: A list of LangChain Document objects representing the chunks.
+    """
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"PDF file not found: {file_path}")
 

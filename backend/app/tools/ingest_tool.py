@@ -10,12 +10,12 @@ def ingest_policy_document(force_files: list[str] = None, clear_remaining: bool 
     Ingests PDF policy documents into the vector database from the data/input directory.
     
     Args:
-        force_files: A list of specific filenames (e.g., ['doc1.pdf']) to force ingest.
-                     If None or empty, the tool will attempt to ingest all new files.
-        clear_remaining: If True, deletes all remaining PDF files in the directory after ingestion.
+        force_files (list[str], optional): A list of specific filenames (e.g., ['doc1.pdf']) to force ingest.
+                                           If None or empty, the tool will attempt to ingest all new files. Defaults to None.
+        clear_remaining (bool, optional): If True, deletes all remaining PDF files in the directory after ingestion. Defaults to False.
         
     Returns:
-        A string indicating the result of the operation, including any skipped files.
+        str: A string indicating the result of the operation, including any skipped files.
     """
     logger.info(f"Tool 'ingest_policy_document' invoked. force_files={force_files}, clear_remaining={clear_remaining}")
     

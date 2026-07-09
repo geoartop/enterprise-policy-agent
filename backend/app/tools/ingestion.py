@@ -24,6 +24,9 @@ def get_vector_store() -> PGVector:
     Initializes and returns the PGVector store using Gemini Embeddings.
     Uses lru_cache to ensure only one instance is created per process, 
     preventing SQLAlchemy MetaData collisions during parallel tool calling.
+    
+    Returns:
+        PGVector: The initialized vector store object.
     """
     # Uses GOOGLE_API_KEY and EMBEDDING_MODEL from environment
     model_name = os.getenv("EMBEDDING_MODEL")
@@ -46,6 +49,14 @@ def get_vector_store() -> PGVector:
 def ingest_file(file_path: str, vector_store: PGVector, force: bool = False):
     """
     Parses a single PDF and inserts it into the database.
+    
+    Args:
+        file_path (str): The path to the PDF file to ingest.
+        vector_store (PGVector): The vector store instance.
+        force (bool, optional): If True, overwrites existing documents. Defaults to False.
+        
+    Returns:
+        bool: True if ingestion was successful, False otherwise.
     """
     filename = os.path.basename(file_path)
     logger.info(f"Processing {filename}...")
@@ -90,6 +101,9 @@ def ingest_file(file_path: str, vector_store: PGVector, force: bool = False):
 
 # for testing purposes
 def main():
+    """
+    Main entry point for testing ingestion directly from the command line.
+    """
     parser = argparse.ArgumentParser(description="Ingest PDF documents into pgvector.")
     parser.add_argument(
         "path",

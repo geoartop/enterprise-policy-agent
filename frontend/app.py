@@ -1,4 +1,5 @@
 import streamlit as st
+import time
 import requests
 import uuid
 import os
@@ -7,16 +8,9 @@ import random
 import string
 from datetime import datetime
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+from utils import generate_short_id, fetch_sessions, fetch_chat_history, send_chat_message, upload_document
 
 st.set_page_config(page_title="Policy Agent", page_icon="📄", layout="wide")
-
-def generate_short_id():
-    """Generates a unique 19-character session identifier."""
-    chars = string.ascii_letters + string.digits
-    rand_part = ''.join(random.choices(chars, k=5))
-    dt_part = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return f"{rand_part}_{dt_part}"
 
 # Initialize session state variables
 if "thread_id" not in st.session_state:
@@ -25,48 +19,6 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "uploader_key" not in st.session_state:
     st.session_state.uploader_key = str(uuid.uuid4())
-
-def fetch_sessions():
-    """Retrieves historical chat sessions from the backend."""
-    try:
-        response = requests.get(f"{API_BASE_URL}/api/sessions")
-        response.raise_for_status()
-        return response.json().get("sessions", [])
-    except Exception as e:
-        st.error(f"Failed to fetch sessions: {e}")
-        return []
-
-def fetch_chat_history(thread_id):
-    """Fetches the message history for a specific session."""
-    try:
-        response = requests.get(f"{API_BASE_URL}/api/chat/{thread_id}/history")
-        response.raise_for_status()
-        return response.json().get("messages", [])
-    except Exception as e:
-        st.error(f"Failed to fetch chat history: {e}")
-        return []
-
-def send_chat_message(thread_id, message):
-    """Sends a user message to the policy agent and retrieves the response."""
-    try:
-        payload = {"message": message, "thread_id": thread_id}
-        response = requests.post(f"{API_BASE_URL}/api/chat", json=payload)
-        response.raise_for_status()
-        return response.json().get("messages", [])
-    except Exception as e:
-        st.error(f"Failed to send message: {e}")
-        return []
-
-def upload_document(file):
-    """Uploads a PDF document for policy ingestion."""
-    try:
-        files = {"file": (file.name, file, "application/pdf")}
-        response = requests.post(f"{API_BASE_URL}/api/upload", files=files)
-        response.raise_for_status()
-        return response.json()
-    except Exception as e:
-        st.error(f"Failed to upload document: {e}")
-        return None
 
 st.markdown(
     """
@@ -92,6 +44,13 @@ st.markdown(
             font-weight: 700 !important;          /* Bold code text */
             padding: 4px 8px !important;          /* Extra spacing */
             border-radius: 4px;
+        }
+
+        [data-testid="stSidebar"] [data-testid="stAlert"] {
+            background-color: #F5F5DC !important; /* Bright beige background */
+            border: 1px solid #000000 !important; /* Clean black border */
+            border-radius: 8px !important;        /* Rounded edges */
+            color: #000000 !important;
         }
     </style>
     """,
@@ -130,6 +89,7 @@ with st.sidebar:
                         all_success = False
                 if all_success:
                     st.success("Files uploaded successfully! Ask the agent to ingest them.")
+                    time.sleep(1.5)
                     st.session_state.uploader_key = str(uuid.uuid4())
                     st.rerun()
     

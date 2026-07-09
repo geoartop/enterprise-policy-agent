@@ -1,29 +1,26 @@
-import os
 import psycopg
-from dotenv import load_dotenv
 from loguru import logger
-
-load_dotenv()
+from backend.app.core.config import settings
 
 def get_db_connection_string() -> str:
     """
-    Constructs the database connection string from environment variables.
-    Falls back to the default docker-compose values if not set.
-    """
-    user = os.getenv("POSTGRES_USER", "myuser")
-    password = os.getenv("POSTGRES_PASSWORD", "mypassword")
-    host = os.getenv("POSTGRES_HOST", "db") 
-    port = os.getenv("POSTGRES_PORT", "5432")
-    db_name = os.getenv("POSTGRES_DB", "policy_agent")
+    Constructs the database connection string from the application settings.
     
-    return f"postgresql+psycopg://{user}:{password}@{host}:{port}/{db_name}"
+    Returns:
+        str: The full database connection string including psycopg adapter hint.
+    """
+    return f"postgresql+psycopg://{settings.postgres_user}:{settings.postgres_password}@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}"
 
 def get_raw_connection_string() -> str:
     """
     Returns the standard postgresql connection string without the psycopg adapter hint.
     Used by libraries like psycopg_pool and langgraph-checkpoint-postgres.
+    
+    Returns:
+        str: The standard database connection string without the adapter hint.
     """
     return get_db_connection_string().replace("postgresql+psycopg://", "postgresql://")
+
 def setup_database():
     """
     Initializes the database by enabling the pgvector extension.

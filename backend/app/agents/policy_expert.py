@@ -19,6 +19,15 @@ class PolicyExpertState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
 
 def call_model(state: PolicyExpertState):
+    """
+    Invokes the LLM with the provided state messages and tools for the Policy Expert agent.
+
+    Args:
+        state (PolicyExpertState): The current conversation state containing messages.
+
+    Returns:
+        dict: A dictionary containing the updated messages list with the model's response.
+    """
     messages = state["messages"]
     sys_msg = SystemMessage(content=system_prompt_text)
     # The LLM receives the system message plus the conversation history
@@ -26,6 +35,15 @@ def call_model(state: PolicyExpertState):
     return {"messages": [response]}
 
 def should_continue(state: PolicyExpertState):
+    """
+    Determines whether the workflow should continue to the tools node or end for the Policy Expert agent.
+
+    Args:
+        state (PolicyExpertState): The current conversation state containing messages.
+
+    Returns:
+        str: "tools" if the last message contains tool calls, otherwise END.
+    """
     messages = state["messages"]
     last_message = messages[-1]
     if getattr(last_message, 'tool_calls', None):
@@ -45,10 +63,10 @@ policy_expert_agent = workflow.compile()
 
 def policy_expert_node(state: dict) -> dict:
     """
-    Executes the Policy Expert node logic.
+    Executes the Policy Expert node logic by invoking the policy expert agent.
     
     Args:
-        state: The current conversation state.
+        state (dict): The current conversation state dictionary.
         
     Returns:
         dict: The updated state containing the agent's response messages.

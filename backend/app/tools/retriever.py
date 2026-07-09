@@ -9,12 +9,12 @@ def search_policy_documents(query: str, year: Optional[str] = None, page_number:
     Searches the internal policy documents vector database for relevant information.
     
     Args:
-        query: The semantic search query based on the user's question.
-        year: An optional 4-digit year (e.g., "2020", "2024") to restrict the search to a specific policy version.
-        page_number: An optional page number to restrict the search to a specific page.
+        query (str): The semantic search query based on the user's question.
+        year (str, optional): An optional 4-digit year (e.g., "2020", "2024") to restrict the search to a specific policy version. Defaults to None.
+        page_number (int, optional): An optional page number to restrict the search to a specific page. Defaults to None.
         
     Returns:
-        A formatted string containing the matching document chunks, including citations for policy_year, source file, and page number.
+        str: A formatted string containing the matching document chunks, including citations for policy_year, source file, and page number.
     """
     logger.info(f"Executing search_policy_documents: query='{query}', year={year}, page_number={page_number}")
     try:

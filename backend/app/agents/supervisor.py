@@ -26,10 +26,10 @@ def supervisor_node(state: AgentState) -> dict:
     agent to invoke, or finishes the workflow.
     
     Args:
-        state: The current AgentState containing the conversation history.
+        state (AgentState): The current AgentState containing the conversation history.
         
     Returns:
-        dict: A dictionary containing the 'next' routing key.
+        dict: A dictionary containing the 'next_agent' routing key.
     """
     logger.info("Supervisor node invoked. Evaluating conversation state.")
     try:

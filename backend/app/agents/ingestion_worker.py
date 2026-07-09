@@ -19,12 +19,30 @@ class IngestionWorkerState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
 
 def call_model(state: IngestionWorkerState):
+    """
+    Invokes the LLM with the provided state messages and tools.
+
+    Args:
+        state (IngestionWorkerState): The current conversation state containing messages.
+
+    Returns:
+        dict: A dictionary containing the updated messages list with the model's response.
+    """
     messages = state["messages"]
     sys_msg = SystemMessage(content=system_prompt_text)
     response = llm_with_tools.invoke([sys_msg] + list(messages))
     return {"messages": [response]}
 
 def should_continue(state: IngestionWorkerState):
+    """
+    Determines whether the workflow should continue to the tools node or end.
+
+    Args:
+        state (IngestionWorkerState): The current conversation state containing messages.
+
+    Returns:
+        str: "tools" if the last message contains tool calls, otherwise END.
+    """
     messages = state["messages"]
     last_message = messages[-1]
     if getattr(last_message, 'tool_calls', None):
@@ -44,10 +62,10 @@ ingestion_worker_agent = workflow.compile()
 
 def ingestion_worker_node(state: dict) -> dict:
     """
-    Executes the Ingestion Worker node logic.
+    Executes the Ingestion Worker node logic by invoking the ingestion worker agent.
     
     Args:
-        state: The current conversation state.
+        state (dict): The current conversation state dictionary.
         
     Returns:
         dict: The updated state containing the agent's response messages.
