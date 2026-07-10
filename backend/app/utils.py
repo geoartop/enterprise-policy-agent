@@ -1,8 +1,13 @@
 import os
 from pathlib import Path
 from loguru import logger
-from langchain_google_genai import ChatGoogleGenerativeAI
+from functools import lru_cache
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_postgres.vectorstores import PGVector
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+
+from backend.app.core.config import settings
+from backend.app.core.database import get_db_connection_string
 
 def load_prompt(filename: str) -> str:
     """
@@ -34,10 +39,10 @@ def get_llm() -> ChatGoogleGenerativeAI:
         ChatGoogleGenerativeAI: The initialized LangChain LLM instance.
     """
     try:
-        model_name = os.getenv("LLM_MODEL")
-        api_key = os.getenv("GOOGLE_API_KEY")
+        model_name = settings.llm_model
+        api_key = settings.google_api_key
         if not api_key:
-            logger.warning("GOOGLE_API_KEY is not set in the environment.")
+            logger.warning("GOOGLE_API_KEY is not set in the configuration.")
         
         llm = ChatGoogleGenerativeAI(
             model=model_name, 
@@ -49,6 +54,32 @@ def get_llm() -> ChatGoogleGenerativeAI:
     except Exception as e:
         logger.error(f"Failed to initialize LLM: {e}")
         raise
+
+@lru_cache(maxsize=1)
+def get_vector_store() -> PGVector:
+    """
+    Initializes and returns the PGVector store using Gemini Embeddings.
+    Uses lru_cache to ensure only one instance is created per process, 
+    preventing SQLAlchemy MetaData collisions during parallel tool calling.
+    
+    Returns:
+        PGVector: The initialized vector store object.
+    """
+    model_name = settings.embedding_model
+    key = settings.google_api_key
+
+    embeddings = GoogleGenerativeAIEmbeddings(model=model_name, api_key=key)
+    connection = get_db_connection_string()
+
+    collection_name = settings.collection_name
+
+    vector_store = PGVector(
+        embeddings=embeddings,
+        collection_name=collection_name,
+        connection=connection,
+        use_jsonb=True,
+    )
+    return vector_store
 
 def create_agent_prompt(system_prompt: str, human_prompt: str, options: list[str], members: list[str]) -> ChatPromptTemplate:
     """

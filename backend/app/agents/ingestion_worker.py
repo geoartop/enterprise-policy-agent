@@ -1,12 +1,11 @@
-from typing import Annotated, Sequence, TypedDict
 from loguru import logger
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
-from langgraph.graph.message import add_messages
-from langchain_core.messages import BaseMessage, SystemMessage
 
 from backend.app.utils import get_llm, load_prompt
 from backend.app.tools.ingest_tool import ingest_policy_document
+from backend.app.agents.state import IngestionWorkerState
+from backend.app.agents.utils import create_call_model, should_continue
 
 logger.info("Initializing Ingestion Worker Agent manually using StateGraph...")
 
@@ -15,43 +14,10 @@ tools = [ingest_policy_document]
 llm_with_tools = llm.bind_tools(tools)
 system_prompt_text = load_prompt("ingestion_worker_system.txt")
 
-class IngestionWorkerState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], add_messages]
-
-def call_model(state: IngestionWorkerState):
-    """
-    Invokes the LLM with the provided state messages and tools.
-
-    Args:
-        state (IngestionWorkerState): The current conversation state containing messages.
-
-    Returns:
-        dict: A dictionary containing the updated messages list with the model's response.
-    """
-    messages = state["messages"]
-    sys_msg = SystemMessage(content=system_prompt_text)
-    response = llm_with_tools.invoke([sys_msg] + list(messages))
-    return {"messages": [response]}
-
-def should_continue(state: IngestionWorkerState):
-    """
-    Determines whether the workflow should continue to the tools node or end.
-
-    Args:
-        state (IngestionWorkerState): The current conversation state containing messages.
-
-    Returns:
-        str: "tools" if the last message contains tool calls, otherwise END.
-    """
-    messages = state["messages"]
-    last_message = messages[-1]
-    if getattr(last_message, 'tool_calls', None):
-        return "tools"
-    return END
 
 # Build the ReAct graph manually
 workflow = StateGraph(IngestionWorkerState)
-workflow.add_node("agent", call_model)
+workflow.add_node("agent", create_call_model(llm_with_tools, system_prompt_text))
 workflow.add_node("tools", ToolNode(tools))
 
 workflow.add_edge(START, "agent")

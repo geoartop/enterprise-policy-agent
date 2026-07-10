@@ -2,7 +2,8 @@ import os
 import glob
 from langchain_core.tools import tool
 from loguru import logger
-from backend.app.tools.ingestion import get_vector_store, ingest_file
+from backend.app.tools.ingestion import ingest_file
+from backend.app.utils import get_vector_store
 
 @tool
 def ingest_policy_document(force_files: list[str] = None, clear_remaining: bool = False) -> str:

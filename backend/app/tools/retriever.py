@@ -1,7 +1,7 @@
 from typing import Optional
 from langchain_core.tools import tool
 from loguru import logger
-from backend.app.tools.ingestion import get_vector_store
+from backend.app.utils import get_vector_store
 
 @tool
 def search_policy_documents(query: str, year: Optional[str] = None, page_number: Optional[int] = None) -> str:

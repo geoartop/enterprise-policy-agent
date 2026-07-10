@@ -5,7 +5,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from loguru import logger
-from backend.app.tools.ingestion import get_vector_store
+from backend.app.utils import get_vector_store
 
 def clear_database():
     """

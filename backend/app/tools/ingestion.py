@@ -5,46 +5,13 @@ import argparse
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 from loguru import logger
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_postgres.vectorstores import PGVector
 import psycopg
-from backend.app.core.database import get_db_connection_string, get_raw_connection_string
+from backend.app.core.database import get_raw_connection_string
 from backend.app.services.document_parser import parse_pdf_to_chunks
-
-
-from functools import lru_cache
-
-@lru_cache(maxsize=1)
-def get_vector_store() -> PGVector:
-    """
-    Initializes and returns the PGVector store using Gemini Embeddings.
-    Uses lru_cache to ensure only one instance is created per process, 
-    preventing SQLAlchemy MetaData collisions during parallel tool calling.
-    
-    Returns:
-        PGVector: The initialized vector store object.
-    """
-    # Uses GOOGLE_API_KEY and EMBEDDING_MODEL from environment
-    model_name = os.getenv("EMBEDDING_MODEL")
-    key = os.getenv("GOOGLE_API_KEY")
-
-    embeddings = GoogleGenerativeAIEmbeddings(model=model_name, api_key=key)
-    connection = get_db_connection_string()
-
-    collection_name = "policy_documents"
-
-    vector_store = PGVector(
-        embeddings=embeddings,
-        collection_name=collection_name,
-        connection=connection,
-        use_jsonb=True,
-    )
-    return vector_store
+from backend.app.utils import get_vector_store
 
 
 def ingest_file(file_path: str, vector_store: PGVector, force: bool = False):
@@ -99,50 +66,3 @@ def ingest_file(file_path: str, vector_store: PGVector, force: bool = False):
         logger.error(f"Error processing {filename}: {e}")
         return False
 
-
-# for testing purposes
-def main():
-    """
-    Main entry point for testing ingestion directly from the command line.
-    """
-    parser = argparse.ArgumentParser(description="Ingest PDF documents into pgvector.")
-    parser.add_argument(
-        "path",
-        nargs="?",
-        default="data/input",
-        help="Path to a specific PDF file or a directory of PDFs.",
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Force ingestion even if the file seems to already exist.",
-    )
-    args = parser.parse_args()
-
-    target_path = os.path.abspath(args.path)
-
-    if not os.path.exists(target_path):
-        logger.error(f"Path not found: {target_path}")
-        return
-
-    logger.info("Connecting to Vector Database...")
-    vector_store = get_vector_store()
-
-    if os.path.isfile(target_path):
-        if target_path.endswith(".pdf"):
-            ingest_file(target_path, vector_store, args.force)
-        else:
-            logger.error("The provided file is not a PDF.")
-    elif os.path.isdir(target_path):
-        pdf_files = glob.glob(os.path.join(target_path, "*.pdf"))
-        if not pdf_files:
-            logger.warning(f"No PDF files found in {target_path}")
-            return
-
-        logger.info(f"Found {len(pdf_files)} PDFs in directory. Starting ingestion...")
-        for pdf_file in pdf_files:
-            ingest_file(pdf_file, vector_store, args.force)
-
-
-if __name__ == "__main__":
-    main()

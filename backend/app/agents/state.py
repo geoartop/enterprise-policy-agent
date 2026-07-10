@@ -14,3 +14,9 @@ class AgentState(TypedDict):
     
     # A string tracking which agent should run next, or 'FINISH' if we are done.
     next_agent: str
+
+class PolicyExpertState(TypedDict):
+    messages: Annotated[Sequence[BaseMessage], add_messages]
+
+class IngestionWorkerState(TypedDict):
+    messages: Annotated[Sequence[BaseMessage], add_messages]
