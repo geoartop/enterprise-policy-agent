@@ -12,7 +12,8 @@ load_dotenv()
 from loguru import logger
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_postgres.vectorstores import PGVector
-from backend.app.core.database import get_db_connection_string
+import psycopg
+from backend.app.core.database import get_db_connection_string, get_raw_connection_string
 from backend.app.services.document_parser import parse_pdf_to_chunks
 
 
@@ -75,15 +76,15 @@ def ingest_file(file_path: str, vector_store: PGVector, force: bool = False):
         else:
             logger.info(f"File {filename} exists and force=True. Deleting old records to prevent duplicates...")
             try:
-                vector_store.delete(filter={"source": {"$eq": filename}})
+                with psycopg.connect(get_raw_connection_string(), autocommit=True) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            "DELETE FROM langchain_pg_embedding WHERE cmetadata->>'source' = %s",
+                            (filename,)
+                        )
                 logger.success(f"Successfully deleted old records for {filename}.")
             except Exception as e:
-                logger.warning(f"Standard filter deletion failed ({e}). Attempting fallback simple filter...")
-                try:
-                    vector_store.delete(filter={"source": filename})
-                    logger.success(f"Successfully deleted old records for {filename}.")
-                except Exception as e2:
-                    logger.error(f"Could not automatically delete old records. Duplicates may be appended! Error: {e2}")
+                logger.error(f"Could not automatically delete old records. Duplicates may be appended! Error: {e}")
 
     try:
         documents = parse_pdf_to_chunks(file_path)

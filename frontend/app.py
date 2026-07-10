@@ -88,8 +88,7 @@ with st.sidebar:
                     if not result:
                         all_success = False
                 if all_success:
-                    st.success("Files uploaded successfully! Ask the agent to ingest them.")
-                    time.sleep(1.5)
+                    time.sleep(1)
                     st.session_state.uploader_key = str(uuid.uuid4())
                     st.rerun()
     
